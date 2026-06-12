@@ -72,8 +72,9 @@ function iniciarMotor() {
 function agregarJugador(indice) {
   if (jugadoresBody[indice]) return;
   const cuerpo = Matter.Bodies.rectangle(80 + indice * 60, ALTO - 100, TAM_JUGADOR, TAM_JUGADOR, {
-    label: 'jugador', friction: 0.05, frictionAir: 0.01, restitution: 0,
+    label: 'jugador', friction: 0, frictionStatic: 0, frictionAir: 0.01, restitution: 0,
     inertia: Infinity, inverseInertia: 0,
+    chamfer: { radius: 6 },
     collisionFilter: { category: 0x0001, mask: 0xFFFF },
     render: { fillStyle: COLORES[indice] }
   });
@@ -103,6 +104,7 @@ function estaEnSuelo(cuerpo) {
   const cuerpos = Matter.Composite.allBodies(engine.world);
   return puntos.some(p => cuerpos.some(b => {
     if (b === cuerpo) return false;
+    if (b.isSensor) return false;
     if (!b.isStatic && b.label !== 'jugador' && b.label !== 'caja') return false;
     return Matter.Bounds.contains(b.bounds, p);
   }));
