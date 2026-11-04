@@ -30,9 +30,30 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Construir imagen Docker
+      - name: Construir y publicar imagen Docker
         uses: docker/build-push-action@v6
         with:
           context: ./host
           push: true
-          tags: vapalepen/pico-park-host:latest
+          tags: |
+            vapalepen/pico-park-host:latest
+            vapalepen/pico-park-host:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: self-hosted
+
+    steps:
+      - name: Bajar la imagen nueva y reiniciar el contenedor
+        working-directory: /opt/proyecto-juegos/valentin-velazquez/pico-park
+        run: |
+          docker compose pull
+          docker compose up -d
+
+      - name: Verificar que el contenedor quedó corriendo
+        run: |
+          sleep 5
+          test "$(docker inspect -f '{{.State.Running}}' pico-park-host)" = "true"
+
+      - name: Limpiar imágenes viejas
+        run: docker image prune -f
